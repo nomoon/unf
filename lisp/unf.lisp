@@ -99,8 +99,8 @@
                       (char/= (char line 0) #\#)
                       (search "; NFKC_CF;" line))
         DO
-        (let ((cfcharlist (car (parse-line line))))
-          (setf (gethash (first cfcharlist) nfkc-casefold-map) (second cfcharlist))
+        (let ((cfcharlists (parse-line line)))
+          (mapcar (lambda (x) (setf (gethash (first x) nfkc-casefold-map) (second x))) cfcharlists)
           ))))
 
 (defvar *nfkc-casefold-map* nfkc-casefold-map))
