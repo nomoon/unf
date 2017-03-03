@@ -13,7 +13,7 @@
 namespace UNF {
   class Normalizer {
   public:
-    enum Form { FORM_NFD, FORM_NFC, FORM_NFKD, FORM_NFKC };
+    enum Form { FORM_NFD, FORM_NFC, FORM_NFKD, FORM_NFKC, FORM_NFKC_CF };
 
   public:
     Normalizer()
@@ -22,22 +22,26 @@ namespace UNF {
 	nf_c(TABLE::NODES, TABLE::CANONICAL_COM_ROOT, TABLE::STRINGS),
 	nf_c_qc(TABLE::NODES, TABLE::NFC_ILLEGAL_ROOT),
 	nf_kc_qc(TABLE::NODES, TABLE::NFKC_ILLEGAL_ROOT),
+	nf_kc_cf(TABLE::NODES, TABLE::NFKC_CASEFOLD_ROOT, TABLE::STRINGS),
 	ccc(TABLE::NODES, TABLE::CANONICAL_CLASS_ROOT)
     {}
 
     const char* normalize(const char* src, Form form) {
       switch(form) {
-      case FORM_NFD:  return nfd(src);
-      case FORM_NFC:  return nfc(src);
-      case FORM_NFKD: return nfkd(src);
-      case FORM_NFKC: return nfkc(src);
-      default:        return src;
+      case FORM_NFD:     return nfd(src);
+      case FORM_NFC:     return nfc(src);
+      case FORM_NFKD:    return nfkd(src);
+      case FORM_NFKC:    return nfkc(src);
+      case FORM_NFKC_CF: return nfkc_cf(src);
+      default:           return src;
       }
     }
-    const char* nfd(const char* src)  { return decompose(src, nf_d); }
-    const char* nfkd(const char* src) { return decompose(src, nf_kd); }
-    const char* nfc(const char* src)  { return compose(src, nf_c_qc, nf_d); }
-    const char* nfkc(const char* src) { return compose(src, nf_kc_qc, nf_kd); }
+    const char* nfd(const char* src)     { return decompose(src, nf_d); }
+    const char* nfkd(const char* src)    { return decompose(src, nf_kd); }
+    const char* nfc(const char* src)     { return compose(src, nf_c_qc, nf_d); }
+    const char* nfkc(const char* src)    { return compose(src, nf_kc_qc, nf_kd); }
+    const char* nfkc_cf(const char* src) { return compose(decompose(src, nf_kc_cf),
+                                                          nf_kc_qc, nf_kd); }
 
   private:
     const char* decompose(const char* src, const Trie::NormalizationForm& nf) {
@@ -127,6 +131,7 @@ namespace UNF {
     const Trie::NormalizationForm nf_c;
     const Trie::NormalizationForm nf_c_qc;
     const Trie::NormalizationForm nf_kc_qc;
+    const Trie::NormalizationForm nf_kc_cf;
     const Trie::CanonicalCombiningClass ccc;
     
     std::string buffer;

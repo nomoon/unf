@@ -16,10 +16,11 @@
          (format out "~2,'0X~C~C~%" class #\Tab char))
        (unf:get-canonical-combining-class-map)))
 
-    ;; decomposition/composition
+    ;; decomposition/composition/case-folding
     (loop FOR (filename mapping) IN `(("canonical-decomposition.def"     ,(unf:get-mapping :nfd))
                                       ("compatibility-decomposition.def" ,(unf:get-mapping :nfkd))
-                                      ("canonical-composition.def"       ,(unf:get-mapping :nfc)))
+                                      ("canonical-composition.def"       ,(unf:get-mapping :nfc))
+                                      ("nfkc-casefold-map.def"           ,(unf:get-mapping :nfkc_cf)))
       DO
       (format *error-output* "; generate '~A'~%" filename)
       (with-output-file (out filename)

@@ -66,6 +66,9 @@
   (defparameter *cod*
     (read-map-def "compatibility-decomposition.def"))
   
+  (defparameter *nfcf*
+    (read-map-def "nfkc-casefold-map.def"))
+
   (defparameter *ccc*
     (read-attr-def "canonical-combining-class.def"))
   
@@ -95,9 +98,10 @@
    (list (mapcar (add-prefix "0") *cac*)
          (mapcar (add-prefix "1") *cad*)
          (mapcar (add-prefix "2") *cod*)
-         (mapcar (add-prefix "3") *ccc*)
-         (mapcar (add-prefix "4") *nic*)
-         (mapcar (add-prefix "5") *nfic*))))
+         (mapcar (add-prefix "3") *nfcf*)
+         (mapcar (add-prefix "4") *ccc*)
+         (mapcar (add-prefix "5") *nic*)
+         (mapcar (add-prefix "6") *nfic*))))
 
 (defparameter *strs*
   (cat
@@ -105,7 +109,8 @@
     (flatten 
      (list (mapcar #'second *cac*)
            (mapcar #'second *cad*)
-           (mapcar #'second *cod*)))
+           (mapcar #'second *cod*)
+           (mapcar #'second *nfcf*)))
     #'> :key #'length)))
 
 (defparameter *octets* (sb-ext:string-to-octets *strs*))
@@ -119,7 +124,7 @@
 (defparameter *vals*   
   (flatten
    (list 
-    (loop FOR as IN (list *cac* *cad* *cod*)
+    (loop FOR as IN (list *cac* *cad* *cod* *nfcf*)
       COLLECT
       (loop FOR (_ v) IN as
             FOR bv = (string-to-octets v)
@@ -152,10 +157,10 @@
         (format out "const unsigned CANONICAL_COM_ROOT = ~d;~%" (+ base (char-code #\0)))
         (format out "const unsigned CANONICAL_DECOM_ROOT = ~d;~%" (+ base (char-code #\1)))
         (format out "const unsigned COMPATIBILITY_DECOM_ROOT = ~d;~%" (+ base (char-code #\2)))
-        (format out "const unsigned CANONICAL_CLASS_ROOT = ~d;~%" (+ base (char-code #\3)))
-        (format out "const unsigned NFC_ILLEGAL_ROOT = ~d;~%" (+ base (char-code #\4)))
-        (format out "const unsigned NFKC_ILLEGAL_ROOT = ~d;~%" (+ base (char-code #\5)))))
-        
+        (format out "const unsigned NFKC_CASEFOLD_ROOT = ~d;~%" (+ base (char-code #\3)))
+        (format out "const unsigned CANONICAL_CLASS_ROOT = ~d;~%" (+ base (char-code #\4)))
+        (format out "const unsigned NFC_ILLEGAL_ROOT = ~d;~%" (+ base (char-code #\5)))
+        (format out "const unsigned NFKC_ILLEGAL_ROOT = ~d;~%" (+ base (char-code #\6)))))
     (with-open-file (in "/tmp/unf.key.idx" :element-type '(unsigned-byte 32))
       (format out "~%const unsigned NODES[]={")
       (read-byte in nil nil)

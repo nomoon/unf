@@ -76,6 +76,35 @@
    *canonical-decomp-map*)
   (defparameter *canonical-comp-map* canonical-comp-map))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; NFKC CaseFold mapping
+(let ((*default-pathname-defaults* *load-pathname*)
+      (nfkc-casefold-map (make-hash-table)))
+  (flet ((parse-line (line)
+           (let* ((parts (mapcar (lambda (x) (string-trim " " x)) (cl-ppcre:split ";" line)))
+                  (range (mapcar #'parse-hex (cl-ppcre:split "\\.\\." (first parts)))))
+             (loop FOR code FROM (first range) TO (or (second range) (first range))
+                   FOR from = (code-char code)
+                   FOR to =
+                   (let ((tmp (cl-ppcre:split " " (third parts))))
+                     (when tmp
+                       (if (equal "NIL" (car tmp))
+                           ()
+                           (mapcar #'parse-hex-char tmp))))
+               COLLECT (list from to)))))
+    (with-open-file (in "DerivedNormalizationProps.txt")
+      (loop FOR line = (read-line in nil nil)
+            WHILE line
+            WHEN (and (plusp (length line))
+                      (char/= (char line 0) #\#)
+                      (search "; NFKC_CF;" line))
+        DO
+        (let ((cfcharlist (car (parse-line line))))
+          (setf (gethash (first cfcharlist) nfkc-casefold-map) (second cfcharlist))
+          ))))
+
+(defvar *nfkc-casefold-map* nfkc-casefold-map))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; auxiliary functions (2)
 (defun get-canonical-combining-class (ch)
@@ -218,13 +247,15 @@
 
   (defvar *canonical-decomp-map* canonical-decomp-map)
   (defvar *compatible-decomp-map* compatible-decomp-map)
+  (defvar *nfkc-casefold-map* nfkc-casefold-map)
 
 (defun get-mapping (normalization-form &aux (mapping '()))
   (dolist (map (ecase normalization-form
                  (:nfd  (list *canonical-decomp-map*))
                  (:nfkd (list *canonical-decomp-map* *compatible-decomp-map*))
-                 (:nfc  (list *canonical-comp-map*))))
-    (maphash 
+                 (:nfc  (list *canonical-comp-map*))
+                 (:nfkc_cf (list *nfkc-casefold-map*))))
+    (maphash
      (lambda (from to)
        (flet ((to-str (x)
                 (if (listp x) (coerce x 'string) (string x))))
@@ -232,7 +263,8 @@
                (:nfd  (push (list (to-str from) (decompose (to-str to) :canonical)) mapping))
                (:nfkd (push (list (to-str from) (decompose (to-str to) :compatible)) mapping))
                (:nfc  (when (string= (compose (to-str from)) (to-str to))
-                        (push (list (decompose (to-str from) :canonical) (to-str to)) mapping))))))
+                        (push (list (decompose (to-str from) :canonical) (to-str to)) mapping)))
+               (:nfkc_cf (push (list (to-str from) (to-str to)) mapping)))))
      map))
 
   ;; hangul
