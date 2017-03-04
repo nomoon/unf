@@ -45,15 +45,24 @@ bool nfkc_test(UNF::Normalizer& norm, const std::vector<std::string>& ary) {
     NF_TEST(norm.nfkc, ary[3], ary[4]);
 }
 
+bool nfkc_cf_test(UNF::Normalizer& norm, const std::vector<std::string>& ary) {
+  std::string nfkc_str = norm.nfkc_cf(ary[0].c_str());
+  return
+    NF_TEST(norm.nfkc_cf, nfkc_str, ary[1]) &&
+    NF_TEST(norm.nfkc_cf, nfkc_str, ary[2]) &&
+    NF_TEST(norm.nfkc_cf, nfkc_str, ary[3]) &&
+    NF_TEST(norm.nfkc_cf, nfkc_str, ary[4]);
+}
+
 typedef bool (*TEST_FN_T) (UNF::Normalizer&, const std::vector<std::string>&);
 
 bool nf_test(const std::vector<std::string>& ary, UNF::Normalizer& norm, int entry_id) {
   static const UNF::Normalizer::Form forms[] = {UNF::Normalizer::FORM_NFD, UNF::Normalizer::FORM_NFC,
-						UNF::Normalizer::FORM_NFKD,UNF::Normalizer::FORM_NFKC};
-  static const TEST_FN_T test_fn[] = {nfd_test, nfc_test, nfkd_test, nfkc_test};
-  static const char* form_names[5] = {"NFD ", "NFC ", "NFKD", "NFKC"};
+						UNF::Normalizer::FORM_NFKD, UNF::Normalizer::FORM_NFKC, UNF::Normalizer::FORM_NFKC_CF};
+  static const TEST_FN_T test_fn[] = {nfd_test, nfc_test, nfkd_test, nfkc_test, nfkc_cf_test};
+  static const char* form_names[5] = {"NFD ", "NFC ", "NFKD", "NFKC", "NFKC_CF"};
 
-  for(int formid=0; formid < 4; formid++)
+  for(int formid=0; formid < 5; formid++)
     if(test_fn[formid](norm, ary)==false) {
       std::cerr << "Failed(" << entry_id << "): " << form_names[formid] << std::endl;
       for(unsigned i=0; i < ary.size(); i++) 

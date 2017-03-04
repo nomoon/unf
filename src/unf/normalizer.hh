@@ -41,8 +41,9 @@ namespace UNF {
     const char* nfc(const char* src)     { return compose(src, nf_c_qc, nf_d); }
     const char* nfkc(const char* src)    { return compose(src, nf_kc_qc, nf_kd); }
     const char* nfkc_cf(const char* src) {
-      buffer4.assign(decompose(src, nf_kc_cf));
-      return nfkc(buffer4.c_str());
+      buffer4.assign(nfd(src));
+      buffer4.assign(decompose(buffer4.c_str(), nf_kc_cf));
+      return composeonly(buffer4.c_str(), nf_c_qc);
     }
 
   private:
@@ -84,7 +85,24 @@ namespace UNF {
 	buffer.append(end, beg);
       }
 
-      return buffer.c_str();      
+      return buffer.c_str();
+    }
+
+    const char* composeonly(const char* src, const Trie::NormalizationForm& nf) {
+      const char* beg = next_invalid_char(src, nf);
+      if(*beg=='\0')
+        return src;
+
+      buffer.assign(src, beg);
+      while(*beg!='\0') {
+        const char* end = next_valid_starter(beg, nf);
+        buffer2.assign(beg, end);
+        end = compose_one(buffer2.c_str(), end, buffer);
+        beg = next_invalid_char(end, nf);
+        buffer.append(end, beg);
+      }
+
+      return buffer.c_str();
     }
 
     const char* compose_one(const char* starter, const char* rest_starter, std::string& buf) {
