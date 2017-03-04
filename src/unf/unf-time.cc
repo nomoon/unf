@@ -44,17 +44,17 @@ int main(int argc, char** argv) {
   std::cerr << "  == " << "average(line length): " << total_length/lines.size() << " byte" << std::endl;
 
   UNF::Normalizer::Form forms[] = {UNF::Normalizer::FORM_NFD, UNF::Normalizer::FORM_NFC,
-				   UNF::Normalizer::FORM_NFKD,UNF::Normalizer::FORM_NFKC};
-  const char* form_names[5] = {"NFD ","NFC ","NFKD","NFKC"};
-  
+				   UNF::Normalizer::FORM_NFKD,UNF::Normalizer::FORM_NFKC, UNF::Normalizer::FORM_NFKC_CF};
+  const char* form_names[5] = {"NFD    ","NFC    ","NFKD   ","NFKC   ", "NFKC_CF"};
+
   std::cerr << "= time: " << std::endl;
   int n=0;
-  for(unsigned formid=0; formid < 4; formid++) {
+  for(unsigned formid=0; formid < 5; formid++) {
     std::cerr << "  == " << form_names[formid] << ":  ";
     double beg_t = gettime();
-    for(unsigned i=0; i < lines.size(); i++) 
+    for(unsigned i=0; i < lines.size(); i++)
       n += strlen(norm.normalize(lines[i].c_str(), forms[formid]));
-    std::cerr << gettime()-beg_t << " sec" << std::endl;    
+    std::cerr << gettime()-beg_t << " sec" << std::endl;
   }
 
   std::cerr << "DONE" << std::endl;
